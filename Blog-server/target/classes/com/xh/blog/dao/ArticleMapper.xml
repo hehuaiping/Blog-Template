@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xh.blog.dao.ArticleMapper">
+	<!-- void saveArticle(Article ate) -->
+	<insert id="saveArticle" parameterType="Article">
+		insert into article(article_id,title,context,auth,create_time,imgs,state,views,category)
+		values(#{article_id},#{title},#{context},#{auth.user_id},#{create_time},#{imgs},#{state},#{views},#{category.category_id})
+	</insert>
+	<!-- List<Article> findNewArticles() -->
+	<resultMap type="Article" id="findArticle">
+		<id property="article_id" column="article_id"></id>
+		<result property="title" column="title"/>
+		<result property="context" column="context"/>
+		<result property="create_time" column="create_time"/>
+		<result property="imgs" column="imgs"/>
+		<result property="state" column="state"/>
+		<result property="views" column="views"/>
+		<!-- 配置一对一属性 -->
+		<association property="auth" javaType="user">
+			<!-- id:声明主键，表示user_id是关联查询对象的唯一标识-->
+			<id property="user_id" column="user_id" />
+			<result property="user_nick" column="user_nick" />
+			<result property="head_photo" column="head_photo" />
+		</association>
+		<association property="category" javaType="category">
+			<!-- id:声明主键,表示category_id是关联查询的唯一标识 -->
+			<id property="category_id" column="category_id" />
+			<result property="category_code" column="category_code" />
+			<result property="category_name" column="category_name" />
+		</association>
+	</resultMap>
+	<!-- 查询最新文章 -->
+	<select id="findNewArticles" resultMap="findArticle">
+		select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,`user` u,category cg
+		where state = 1 and ate.auth = u.user_id and ate.category=cg.category_id
+		order by create_time  desc
+		limit 0,3;
+	</select>
+	<!-- 查询推荐文章 -->
+	<!-- List<Article> findRecommendArticles() -->
+	<select id="findRecommendArticles" resultMap="findArticle">
+		select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,user u,category cg
+		where state = 2 and ate.auth=u.user_id and ate.category=cg.category_id
+		order by views desc
+		limit 0,3;
+	</select>
+	<!--  查询最热文章 List<Article> findHotArticle(); -->
+	<select id="findHotArticle" resultMap="findArticle">
+		select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,user u,category cg
+		where state = 1 and ate.auth=u.user_id and ate.category=cg.category_id
+		order by views desc
+		limit 0,3; 
+	</select>
+	<!-- 根据ID查询文章 -->
+	<!-- Article findArticleById(String article_id); -->
+	<select id="findArticleById" parameterType="String" resultMap="findArticle">
+		select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,user u,category cg   
+		where ate.auth=u.user_id and ate.article_id = #{ate.article_id}  and ate.category=cg.category_id
+	</select>
+	
+	<!-- 
+	List<Article> findArticleByPageAndCategory
+		(Integer category_id, Integer currentPage, Integer pageSize);
+	 -->
+	<select id="findArticleByPageAndCategory" parameterType="Integer" resultMap="findArticle">
+		select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,user u,category cg   
+		where ate.auth=u.user_id 
+			  and ate.category=cg.category_id
+			  and cg.category_id = #{param1}
+		limit #{param2},#{param3}	  
+	</select>
+	<!-- 根据ID增加一次浏览记录void plusArticleViewsById(String article_id) -->
+	<update id="plusArticleViewsById" parameterType="String">
+		update article set views = views + 1
+		where article_id = #{article_id};
+	</update>
+	
+	<!-- 查询文章总记录数
+		Integer findArticleCountNum(Integer state);
+	 -->
+	 <select id="findArticleCountNum" parameterType="Integer" resultType="Integer">
+	 	select count(1) from article
+	 	where state = #{state};
+	 </select>
+	 
+	 <!-- 根据分页条件查询文章列表
+	 	List<Article> findArticleByPage(Integer currentPage, Integer pageSize);
+	  -->
+	  
+	 <select id="findArticleByPage" parameterType="Integer" resultMap="findArticle">
+	 	select ate.article_id,ate.title,ate.context,ate.create_time,ate.imgs,ate.state,ate.views,
+			   u.user_id,u.user_nick ,u.head_photo,cg.category_id,cg.category_code,cg.category_name
+		from article ate,`user` u,category cg   
+		where ate.auth = u.user_id and ate.category=cg.category_id and ate.state between #{param3} and #{param4}
+		order by create_time  desc
+		limit #{param1},#{param2}
+	 </select>
+	 
+	 <!-- 发布文章 void publishArticle(Integer article_id); -->
+	 <update id="publishArticle" parameterType="String">
+	 	update article set state = 1 where article_id = #{article_id}
+	 </update>
+	 
+	 <!-- 下架文章 void lowerArticle(String article_id); -->
+	 <update id="lowerArticle" parameterType="String">
+	 	update article set state = 0 where article_id = #{article_id}
+	 </update>
+	 
+	 <!-- 更新文章 void updateArticle(Article article); -->
+	 <update id="updateArticle" parameterType="Article">
+	 	update article set title = #{title},context = #{context},auth=#{auth.user_id}
+	 	where article_id = #{article_id}
+	 </update>
+	
+	 <!-- 删除文章  void deleteArticleById(String article_id); -->
+	 <update id="deleteArticleById" parameterType="String">
+	 	update article set state = 3 
+	 	where article_id = #{article_id}
+	 </update>
+	 
+	 <!--  查询用户总共写了多少博文  Integer findCountArticleByUserId(String user_id); -->
+	 <select id="findCountArticleByUserId" parameterType="String" resultType="Integer">
+	 	select count(1) from article
+	 	where auth = #{user_id}
+	 </select>
+	 
+	  <!--  查询用户最近写的博客  List<Article> findRecentlyArticleByUserId(String user_id); -->
+	 <select id="findRecentlyArticleByUserId" parameterType="String" resultType="Article">
+	 	select article_id,title,create_time 
+	 	from article
+	 	where auth = #{user_id}
+	 	order by create_time desc
+	 	limit 0,3
+	 </select>
+	 
+	 <!-- 查询该用户下所有博客中  被阅读最多的博客  List<Article> findReadMostArticleByUserId(String user_id); -->
+	 <select id="findReadMostArticleByUserId" parameterType="String" resultType="Article">
+	 	select article_id,title,create_time 
+	 	from article
+	 	where auth = #{user_id}
+	 	order by views desc
+	 	limit 0,3
+	 </select>
+	 
+	 <!-- 将文章设置为推荐阅读  void setArticleHot(String article_id);-->
+	 <update id="setArticleHot" parameterType="String">
+	 	update article set state = 2 
+	 	where article_id = #{article_id}
+	 </update>
+	 <!-- 将文章取消推荐阅读  void setArticleReHot(String article_id);-->
+	  <update id="setArticleReHot" parameterType="String">
+	 	update article set state = 1 
+	 	where article_id = #{article_id}
+	 </update>
+	 
+	 <!-- 查询推荐文章的文章数 Integer findCountHotArticle(); -->
+	 <select id="findCountHotArticle" resultType="Integer">
+	 	select count(1) from article 
+	 	where state = 2
+	 </select>
+	 
+	 <!-- 
+	   查询用户总记录数
+	 @return 返回用户总记录数
+	 Integer findUserCountNum(); -->
+	 <select id="findUserCountNum" resultType="Integer">
+	 	select count(1) from user;
+	 </select>
+	 
+	 <!-- 
+	 /**
+	 * 按分页条件查询用户列表
+	 * @param currentPage 当前页 
+	 * @param pageSize 每页显示大小
+	 * @return 返回按分页条件查询到的用户列表
+	 List<User> findUserByPage(Integer currentPage, Integer pageSize);
+	 -->
+	 <select id="findUserByPage" parameterType="Integer" resultType="User">
+	 	select * from user
+	 	where user_state != 3
+	 	limit #{param1},#{param2};
+	 </select>
+	 
+	 <!--
+	   批量删除文章 	
+	 void batDeleteArticleById(String article_id); -->
+	 <delete id="batDeleteArticleById">
+	 	delete from article
+	 	where article_id = #{article_id}
+	 </delete>
+	 
+	 <!-- 
+	 查询文章分类
+	 Category findCategory(); -->
+	 <select id="findCategory" resultType="category">
+	 	select category_id,category_code,category_name from category;
+	 </select>
+	 
+	 <!-- Integer findCategoryArticleCountNum(Integer category_id); -->
+	 <select id="findCategoryArticleCountNum" parameterType="Integer" resultType="Integer">
+	 	select count(1) from article 
+	 	where category = #{category_id};
+	 </select>
+	 
+	 <!-- void resetArticleById(Integer article_id); 还原文章 -->
+	 <update id="resetArticleById" parameterType="String">
+	   update article set state = 0
+	   where article_id = #{article_id}
+	 </update>
+</mapper>

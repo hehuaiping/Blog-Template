@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xh.blog.dao.UserMapper">
+	<!-- void save(User user) -->
+	<insert id="save" parameterType="User">
+		insert into user(user_id,user_name,user_password,user_email,user_birthday,user_nick,user_create_time,user_phone)
+		values(#{user_id},#{user_name},#{user_password},#{user_email},#{user_birthday},#{user_nick},#{user_create_time},#{user_phone})
+	</insert>
+	
+	<!-- boolean checkUserName(String user_name) -->
+	<select id="checkUserName" parameterType="String" resultType="String">
+		select user_name from user where user_name = #{user_name}
+	</select>
+	
+	<!-- User findUserByUserName(String user_name) -->
+	<select id="findUserByUserName" parameterType="String" resultType="User">
+		select * from user where user_name = #{user_name}
+	</select>
+	
+	<!-- void changeUserState(Integer user_id, Integer user_state); -->
+	<update id="changeUserState" parameterType="Integer">
+		update user set user_state=#{param2}
+		where user_id=#{param1}
+	</update>
+	
+	<!-- User findUserByID(Integer user_id); -->
+	<select id="findUserByID" parameterType="Integer" resultType="User">
+		select * from user 
+		where user_id = #{user_id}
+	</select>
+	
+	<!-- void updateUser(User user); -->
+	<update id="updateUser" parameterType="User">
+		update user set 
+		user_name=#{user_name},user_nick=#{user_nick},user_password=#{user_password},
+		user_phone=#{user_phone},user_email=#{user_email},user_address=#{user_address}
+		where user_id=#{user_id}
+	</update>
+	
+	<!-- void deleteUserById(Integer user_id); -->
+	<update id="deleteUserById" parameterType="Integer">
+		update user set user_state=3 
+		where user_id=#{user_id}
+	</update>
+	
+	<!-- Integer findUserDelCountNum(); -->
+	<select id="findUserDelCountNum" resultType="Integer">
+		select count(1) from user 
+		where user_state = 3
+	</select>
+	
+	<!-- List<User> findUserDelByPage(Integer currentPage, Integer pageSize); -->
+	<select id="findUserDelByPage" parameterType="Integer" resultType="User" >
+		select * from user 
+		where user_state = 3
+		limit #{param1},#{param2}
+	</select>
+	
+	<!-- void resetUserById(Integer user_id);	 -->
+	<update id="resetUserById" parameterType="Integer">
+		update user set 
+		user_state = 1
+		where user_id = #{user_id}
+	</update>	
+	<!-- void trueDeleteUserById(Integer user_id); -->
+	<delete id="trueDeleteUserById" parameterType="Integer">
+		delete from user 
+		where user_id = #{user_id}
+	</delete>
+	
+</mapper>
